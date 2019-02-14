@@ -1,0 +1,286 @@
+---
+apiVersion: xl-release/v1
+kind: Templates
+spec:
+- template: Lift-and-Shift
+  description: |-
+    This XL Release template shows how to manage the delivery of an artifact through different environments, including AWS.
+    This demonstration uses Jira, AWS, Jenkins.
+  scheduledStartDate: 2019-02-14T14:53:40.736Z
+  dueDate: 2019-02-14T15:53:40.736Z
+  phases:
+  - phase: DEV
+    tasks:
+    - name: Create Jira Work Task
+      type: jira.CreateIssue
+      jiraServer: XL Jira
+      project: SAN
+      description: Track the lifecycle of the software delivery.
+      variableMapping:
+        pythonScript.issueId: ${ticket}
+    - name: Build Code
+      type: jenkins.Build
+      jenkinsServer: Jenkins
+      jobName: devops-as-code-ci-demo
+      precondition: |
+        0
+      variableMapping:
+        pythonScript.buildNumber: ${buildNumber}
+        pythonScript.buildStatus: ${buildNumber}
+    - name: Update Ticket with DEV Information
+      type: jira.UpdateIssue
+      jiraServer: XL Jira
+      issueId: ${ticket}
+      newStatus: IN PROGRESS
+      comment: Build ${buildNumber} finished with status ${buildStatus}
+    - name: Deploy to DEV
+      type: xlrelease.SequentialGroup
+      tasks:
+      - name: Provision DEV
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/REST-o-rant/rest-o-rant-ecs-fargate-cluster
+        deploymentVersion: "1.0"
+        deploymentPackage: Applications/REST-o-rant/rest-o-rant-ecs-fargate-cluster/1.0
+        deploymentEnvironment: Environments/Local Docker Engine
+      - name: Deploy to DEV
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/REST-o-rant/rest-o-rant-ecs-service
+        deploymentVersion: "1.0"
+        deploymentPackage: Applications/REST-o-rant/rest-o-rant-ecs-service/1.0
+        deploymentEnvironment: Environments/Local Docker Engine
+        variableMapping:
+          pythonScript.xlDeployTaskId: ${deployWebTaskID}
+      - name: Update Ticket with DEV Deployment
+        type: jira.UpdateIssue
+        jiraServer: XL Jira
+        issueId: ${ticket}
+        comment: |-
+          Deployment to Development complete for:
+          Web ${deployWebTaskID}
+          API ${deployAPITaskID}
+      - name: Validate DEV Environment
+        type: xlrelease.Task
+        description: Navigate to http://localhost:10081/ and verify the application is running.
+    - name: Undeploy
+      type: xlrelease.SequentialGroup
+      tasks:
+      - name: Undeploy DEV
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/Local Docker Engine/rest-o-rant-ecs-service
+        variableMapping:
+          pythonScript.xlDeployTaskId: ${undeployWebTaskID}
+      - name: Deprovision DEV
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/Local Docker Engine/rest-o-rant-ecs-fargate-cluster
+        variableMapping:
+          pythonScript.xlDeployTaskId: ${undeployAPITaskID}
+      - name: Update Ticket with DEV Undeploy
+        type: jira.UpdateIssue
+        jiraServer: XL Jira
+        issueId: ${ticket}
+        comment: Undeployed Web ${undeployWebTaskID} and API ${undeployAPITaskID} from Development.
+    color: '#0099CC'
+  - phase: TEST
+    tasks:
+    - name: Ready to go?
+      type: xlrelease.GateTask
+      team: Release Admin
+    - name: Update Ticket with TEST Information
+      type: jira.UpdateIssue
+      jiraServer: XL Jira
+      issueId: ${ticket}
+      comment: Deploying ${buildNumber} to TEST.
+    - name: Deploy to TEST
+      type: xlrelease.SequentialGroup
+      tasks:
+      - name: Provision TEST
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/REST-o-rant/rest-o-rant-ecs-fargate-cluster
+        deploymentVersion: "1.0"
+        deploymentPackage: REST-o-rant/rest-o-rant-ecs-fargate-cluster/1.0
+        deploymentEnvironment: Environments/AWS
+      - name: Deploy to TEST
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/REST-o-rant/rest-o-rant-ecs-service
+        deploymentVersion: "1.0"
+        deploymentPackage: REST-o-rant/rest-o-rant-ecs-service/1.0
+        deploymentEnvironment: Environments/AWS
+      - name: Test Application in TEST
+        type: xlrelease.Task
+        description: |
+          The REST-o-rant app is now live on ECS!
+          Check out the web site and complete this task when done.
+
+          Open the web site by running this command:
+          ```
+          demo/ecs/open-rest-o-rant-web
+          ```
+        team: Release Admin
+      - name: Update Ticket with TEST Deployment
+        type: jira.UpdateIssue
+        jiraServer: XL Jira
+        issueId: ${ticket}
+        comment: |-
+          Deployment to TEST complete for:
+          Web ${deployWebTaskID}
+          API ${deployAPITaskID}
+    - name: Undeploy
+      type: xlrelease.SequentialGroup
+      tasks:
+      - name: Undeploy TEST
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/AWS/rest-o-rant-ecs-service
+      - name: Deprovision TEST
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/AWS/rest-o-rant-ecs-fargate-cluster
+      - name: Update Ticket with TEST Undeploy
+        type: jira.UpdateIssue
+        jiraServer: XL Jira
+        issueId: ${ticket}
+        comment: Undeployed ${buildNumber} from TEST.
+    color: '#0099CC'
+  - phase: PROD
+    tasks:
+    - name: Ready to deploy to PROD?
+      type: xlrelease.GateTask
+      team: Release Admin
+    - name: Update Ticket with PROD Information
+      type: jira.UpdateIssue
+      jiraServer: XL Jira
+      issueId: ${ticket}
+      comment: Deploying ${buildNumber} to PROD.
+    - name: Deploy to PROD
+      type: xlrelease.SequentialGroup
+      tasks:
+      - name: Provision PROD
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/REST-o-rant/rest-o-rant-ecs-fargate-cluster
+        deploymentVersion: "1.0"
+        deploymentPackage: Applications/REST-o-rant/rest-o-rant-ecs-fargate-cluster/1.0
+        deploymentEnvironment: Environments/AWS
+      - name: Deploy to PROD
+        type: xldeploy.Deploy
+        server: XL Deploy
+        deploymentApplication: Applications/REST-o-rant/rest-o-rant-ecs-service
+        deploymentVersion: "1.0"
+        deploymentPackage: Applications/REST-o-rant/rest-o-rant-ecs-service/1.0
+        deploymentEnvironment: Environments/AWS
+        variableMapping:
+          pythonScript.xlDeployTaskId: ${deployWebTaskID}
+      - name: Test Application in PROD
+        type: xlrelease.Task
+        description: |
+          The REST-o-rant app is now live on ECS!
+          Check out the web site and complete this task when done.
+
+          Open the web site by running this command:
+          ```
+          demo/ecs/open-rest-o-rant-web
+          ```
+        team: Release Admin
+      - name: Update Ticket with PROD Deployment
+        type: jira.UpdateIssue
+        jiraServer: XL Jira
+        issueId: ${ticket}
+        comment: |-
+          Deployment to PROD complete for:
+          Web ${deployWebTaskID}
+          API ${deployAPITaskID}
+    - name: Cleanup
+      type: xlrelease.SequentialGroup
+      tasks:
+      - name: Reset Application
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/AWS/rest-o-rant-ecs-service
+      - name: Clean up old PROD
+        type: xldeploy.Undeploy
+        server: XL Deploy
+        deployedApplication: Environments/AWS/rest-o-rant-ecs-fargate-cluster
+      - name: Close Ticket
+        type: jira.UpdateIssue
+        jiraServer: XL Jira
+        issueId: ${ticket}
+        newStatus: RESOLVED
+        comment: Close ticket
+    color: '#999999'
+  tags:
+  - REST-o-rant
+  - ECS
+  variables:
+  - type: xlrelease.StringVariable
+    key: buildNumber
+    requiresValue: false
+    showOnReleaseStart: false
+  - type: xlrelease.StringVariable
+    key: ticket
+    requiresValue: false
+    showOnReleaseStart: false
+  - type: xlrelease.StringVariable
+    key: buildStatus
+    requiresValue: false
+    showOnReleaseStart: false
+  - type: xlrelease.StringVariable
+    key: deployWebTaskID
+    requiresValue: false
+    showOnReleaseStart: false
+  - type: xlrelease.StringVariable
+    key: deployAPITaskID
+    requiresValue: false
+    showOnReleaseStart: false
+  - type: xlrelease.StringVariable
+    key: undeployWebTaskID
+    requiresValue: false
+    showOnReleaseStart: false
+  - type: xlrelease.StringVariable
+    key: undeployAPITaskID
+    requiresValue: false
+    showOnReleaseStart: false
+- type: xlrelease.Dashboard
+  tiles:
+  - name: Release progress
+    type: xlrelease.ReleaseProgressTile
+  - name: Release health
+    type: xlrelease.ReleaseHealthTile
+  - name: Release summary
+    type: xlrelease.ReleaseSummaryTile
+  - name: Resource usage
+    type: xlrelease.ResourceUsageTile
+  - name: Release timeline
+    type: xlrelease.TimelineTile
+  parentTemplate: Lift-and-Shift
+- type: xlrelease.Dashboard
+  tiles:
+  - name: Release progress
+    type: xlrelease.ReleaseProgressTile
+  - name: Release health
+    type: xlrelease.ReleaseHealthTile
+  - name: Release summary
+    type: xlrelease.ReleaseSummaryTile
+  - name: Resource usage
+    type: xlrelease.ResourceUsageTile
+  - name: Release timeline
+    type: xlrelease.TimelineTile
+  parentTemplate: REST-o-rant on Docker
+- type: xlrelease.Dashboard
+  tiles:
+  - name: Release progress
+    type: xlrelease.ReleaseProgressTile
+  - name: Release health
+    type: xlrelease.ReleaseHealthTile
+  - name: Release summary
+    type: xlrelease.ReleaseSummaryTile
+  - name: Resource usage
+    type: xlrelease.ResourceUsageTile
+  - name: Release timeline
+    type: xlrelease.TimelineTile
+  parentTemplate: REST-o-rant on ECS
