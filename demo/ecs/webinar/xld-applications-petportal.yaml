@@ -1,0 +1,54 @@
+---
+apiVersion: xl-deploy/v1
+kind: Applications
+spec:
+- name: Applications/PetPortal/1.0
+  type: udm.DeploymentPackage
+  orchestrator:
+  - sequential-by-deployment-group
+  satisfiesReleaseNotes: true
+  satisfiesPerformanceTested: true
+  satisfiesBusinessSignoff: Manager
+  deployables:
+  - name: PetPortal-to-PetClinic-ProxyPass
+    type: www.ApacheProxyPassSpec
+    from: /{{PETCLINIC_CONTEXT_ROOT}}
+    to: http://{{APPSERVER_HOST}}:{{APPSERVER_PORT}}/{{PETCLINIC_CONTEXT_ROOT}}
+    reverse: "true"
+  - name: PetClinic-ear
+    type: jee.Ear
+    file: !file "artifacts/Applications/PetPortal/1.0/PetClinic-ear/PetClinic-1.0.ear"
+  - name: webContent
+    type: www.WebContent
+    placeholders:
+    - PETPORTAL_TITLE
+    file: !file "artifacts/Applications/PetPortal/1.0/webContent/PetPortal_pages"
+  - name: PetClinic-ds-on-jboss
+    type: jbossdm.DataSourceSpec
+    jndiName: java:/jdbc/pets
+    driverName: '{{DB_DRIVER}}'
+    username: '{{DB_USERNAME}}'
+    connectionUrl: '{{DB_URL}}'
+- name: Applications/PetPortal/2.0
+  type: udm.DeploymentPackage
+  satisfiesReleaseNotes: true
+  deployables:
+  - name: PetPortal-to-PetClinic-ProxyPass
+    type: www.ApacheProxyPassSpec
+    from: /{{PETCLINIC_CONTEXT_ROOT}}
+    to: http://{{APPSERVER_HOST}}:{{APPSERVER_PORT}}/{{PETCLINIC_CONTEXT_ROOT}}
+    reverse: "true"
+  - name: webContent
+    type: www.WebContent
+    placeholders:
+    - PETPORTAL_TITLE
+    file: !file "artifacts/Applications/PetPortal/2.0/webContent/PetPortal_pages"
+  - name: PetClinic-ear
+    type: jee.Ear
+    file: !file "artifacts/Applications/PetPortal/2.0/PetClinic-ear/PetClinic-1.0.ear"
+  - name: PetClinic-ds-on-jboss
+    type: jbossdm.DataSourceSpec
+    jndiName: java:/jdbc/pets
+    driverName: '{{DB_DRIVER}}'
+    username: '{{DB_USERNAME}}'
+    connectionUrl: '{{DB_URL}}'
