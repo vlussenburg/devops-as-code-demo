@@ -2,130 +2,133 @@
 apiVersion: xl-deploy/v1
 kind: Applications
 spec:
-- name: Applications/REST-o-rant/rest-o-rant-ecs-fargate-cluster
-  type: udm.Application
-  lastVersion: "1.0"
+- name: REST-o-rant
+  type: core.Directory
   children:
-  - name: "1.0"
-    type: udm.DeploymentPackage
-    deployables:
-    - name: ror-ecs-subnet-ipv4-az-1b
-      type: aws.vpc.SubnetSpec
-      subnetName: '{{username}}-ror-ecs-subnet-ipv4-az-1b'
-      vpc: Name:{{username}}-ror-ecs-vpc
-      cidrBlock: 10.0.1.0/24
-      region: '{{region}}'
-      availabilityZone: '{{region}}b'
-    - name: ror-ecs-security-group
-      type: aws.vpc.SecurityGroupSpec
-      securityGroupName: '{{username}}-ror-ecs-security-group'
-      description: Created by XL Deploy
-      region: '{{region}}'
-      vpc: Name:{{username}}-ror-ecs-vpc
-      inboundRules:
-      - name: inbound
-        type: aws.vpc.SecurityGroupInboundRuleSpec
-        protocol: -1
-        portRange: "22"
-        source: 0.0.0.0/0
-    - name: ror-ecs-subnet-ipv4-az-1a
-      type: aws.vpc.SubnetSpec
-      subnetName: '{{username}}-ror-ecs-subnet-ipv4-az-1a'
-      vpc: Name:{{username}}-ror-ecs-vpc
-      cidrBlock: 10.0.0.0/24
-      region: '{{region}}'
-      availabilityZone: '{{region}}a'
-    - name: ror-ecs-cluster
-      type: aws.ecs.ClusterSpec
-      clusterName: '{{username}}-ror-ecs-cluster'
-      region: '{{region}}'
-    - name: ror-ecs-vpc
-      type: aws.vpc.VPCSpec
-      vpcName: '{{username}}-ror-ecs-vpc'
-      cidrBlock: 10.0.0.0/16
-      region: '{{region}}'
-      createInternetGateway: "true"
-      internetGatewayName: '{{username}}-ror-ecs-igw'
-    - name: ror-ecs-route-table
-      type: aws.vpc.RouteTableSpec
-      routeTableName: '{{username}}-ror-ecs-route-table'
-      region: '{{region}}'
-      vpc: Name:{{username}}-ror-ecs-vpc
-      subnets:
-      - Name:{{username}}-ror-ecs-subnet-ipv4-az-1b
-      - Name:{{username}}-ror-ecs-subnet-ipv4-az-1a
-      is_main: "true"
-      routes:
-      - name: route1
-        type: aws.vpc.RouteSpec
-        ipv4Address: 0.0.0.0/0
-        gatewayId: Name:{{username}}-ror-ecs-igw
-- name: Applications/REST-o-rant/rest-o-rant-ecs-service
-  type: udm.Application
-  lastVersion: "1.0"
-  children:
-  - name: "1.0"
-    type: udm.DeploymentPackage
-    deployables:
-    - name: rest-o-rant-network
-      type: docker.NetworkSpec
-      networkName: rest-o-rant
-      driver: bridge
-    - name: rest-o-rant-service
-      type: aws.ecs.ServiceSpec
-      launchType: FARGATE
-      networkMode: awsvpc
-      cpu: "512"
-      memory: "1024"
-      subnets:
-      - Name:{{username}}-ror-ecs-subnet-ipv4-az-1b
-      - Name:{{username}}-ror-ecs-subnet-ipv4-az-1a
-      securityGroups:
-      - Name:{{username}}-ror-ecs-security-group
-      assignPublicIp: "true"
-      serviceName: rest-o-rant-service
-      desiredCount: "1"
-      containerDefinitions:
-      - name: rest-o-rant-web
-        type: aws.ecs.ContainerDefinitionSpec
+  - name: rest-o-rant-ecs-fargate-cluster
+    type: udm.Application
+    lastVersion: "1.0"
+    children:
+    - name: "1.0"
+      type: udm.DeploymentPackage
+      deployables:
+      - name: ror-ecs-subnet-ipv4-az-1b
+        type: aws.vpc.SubnetSpec
+        subnetName: '{{username}}-ror-ecs-subnet-ipv4-az-1b'
+        vpc: Name:{{username}}-ror-ecs-vpc
+        cidrBlock: 10.0.1.0/24
+        region: '{{region}}'
+        availabilityZone: '{{region}}b'
+      - name: ror-ecs-security-group
+        type: aws.vpc.SecurityGroupSpec
+        securityGroupName: '{{username}}-ror-ecs-security-group'
+        description: Created by XL Deploy
+        region: '{{region}}'
+        vpc: Name:{{username}}-ror-ecs-vpc
+        inboundRules:
+        - name: inbound
+          type: aws.vpc.SecurityGroupInboundRuleSpec
+          protocol: -1
+          portRange: "22"
+          source: 0.0.0.0/0
+      - name: ror-ecs-subnet-ipv4-az-1a
+        type: aws.vpc.SubnetSpec
+        subnetName: '{{username}}-ror-ecs-subnet-ipv4-az-1a'
+        vpc: Name:{{username}}-ror-ecs-vpc
+        cidrBlock: 10.0.0.0/24
+        region: '{{region}}'
+        availabilityZone: '{{region}}a'
+      - name: ror-ecs-cluster
+        type: aws.ecs.ClusterSpec
+        clusterName: '{{username}}-ror-ecs-cluster'
+        region: '{{region}}'
+      - name: ror-ecs-vpc
+        type: aws.vpc.VPCSpec
+        vpcName: '{{username}}-ror-ecs-vpc'
+        cidrBlock: 10.0.0.0/16
+        region: '{{region}}'
+        createInternetGateway: "true"
+        internetGatewayName: '{{username}}-ror-ecs-igw'
+      - name: ror-ecs-route-table
+        type: aws.vpc.RouteTableSpec
+        routeTableName: '{{username}}-ror-ecs-route-table'
+        region: '{{region}}'
+        vpc: Name:{{username}}-ror-ecs-vpc
+        subnets:
+        - Name:{{username}}-ror-ecs-subnet-ipv4-az-1b
+        - Name:{{username}}-ror-ecs-subnet-ipv4-az-1a
+        is_main: "true"
+        routes:
+        - name: route1
+          type: aws.vpc.RouteSpec
+          ipv4Address: 0.0.0.0/0
+          gatewayId: Name:{{username}}-ror-ecs-igw
+  - name: Applications/REST-o-rant/rest-o-rant-ecs-service
+    type: udm.Application
+    lastVersion: "1.0"
+    children:
+    - name: "1.0"
+      type: udm.DeploymentPackage
+      deployables:
+      - name: rest-o-rant-network
+        type: docker.NetworkSpec
+        networkName: rest-o-rant
+        driver: bridge
+      - name: rest-o-rant-service
+        type: aws.ecs.ServiceSpec
+        launchType: FARGATE
+        networkMode: awsvpc
+        cpu: "512"
+        memory: "1024"
+        subnets:
+        - Name:{{username}}-ror-ecs-subnet-ipv4-az-1b
+        - Name:{{username}}-ror-ecs-subnet-ipv4-az-1a
+        securityGroups:
+        - Name:{{username}}-ror-ecs-security-group
+        assignPublicIp: "true"
+        serviceName: rest-o-rant-service
+        desiredCount: "1"
+        containerDefinitions:
+        - name: rest-o-rant-web
+          type: aws.ecs.ContainerDefinitionSpec
+          containerName: rest-o-rant-web
+          image: xebialabsunsupported/rest-o-rant-web:v1
+          cpu: "128"
+          softMemoryLimit: "256"
+          environment:
+            API_ENDPOINT: http://localhost:8080/rest-o-rant-api
+          portMappings:
+          - name: port-mapping-80
+            type: aws.ecs.PortSpec
+            containerPort: "80"
+        - name: rest-o-rant-api
+          type: aws.ecs.ContainerDefinitionSpec
+          containerName: rest-o-rant-api
+          image: xebialabsunsupported/rest-o-rant-api:v1
+          cpu: "384"
+          softMemoryLimit: "768"
+          portMappings:
+          - name: port-mapping-8080
+            type: aws.ecs.PortSpec
+            containerPort: "8080"
+      - name: rest-o-rant-web-container
+        type: docker.ContainerSpec
         containerName: rest-o-rant-web
         image: xebialabsunsupported/rest-o-rant-web:v1
-        cpu: "128"
-        softMemoryLimit: "256"
         environment:
           API_ENDPOINT: http://localhost:8080/rest-o-rant-api
-        portMappings:
-        - name: port-mapping-80
-          type: aws.ecs.PortSpec
+        showLogsAfter: "5"
+        portBindings:
+        - name: pm-80
+          type: docker.PortSpec
+          hostPort: "10081"
           containerPort: "80"
-      - name: rest-o-rant-api
-        type: aws.ecs.ContainerDefinitionSpec
-        containerName: rest-o-rant-api
-        image: xebialabsunsupported/rest-o-rant-api:v1
-        cpu: "384"
-        softMemoryLimit: "768"
-        portMappings:
-        - name: port-mapping-8080
-          type: aws.ecs.PortSpec
+      - name: rest-o-rant-api-container
+        type: docker.ContainerSpec
+        image: xebialabsunsupported/rest-o-rant-api
+        showLogsAfter: "5"
+        portBindings:
+        - name: pm-8080
+          type: docker.PortSpec
+          hostPort: "8181"
           containerPort: "8080"
-    - name: rest-o-rant-web-container
-      type: docker.ContainerSpec
-      containerName: rest-o-rant-web
-      image: xebialabsunsupported/rest-o-rant-web:v1
-      environment:
-        API_ENDPOINT: http://localhost:8080/rest-o-rant-api
-      showLogsAfter: "5"
-      portBindings:
-      - name: pm-80
-        type: docker.PortSpec
-        hostPort: "10081"
-        containerPort: "80"
-    - name: rest-o-rant-api-container
-      type: docker.ContainerSpec
-      image: xebialabsunsupported/rest-o-rant-api
-      showLogsAfter: "5"
-      portBindings:
-      - name: pm-8080
-        type: docker.PortSpec
-        hostPort: "8181"
-        containerPort: "8080"

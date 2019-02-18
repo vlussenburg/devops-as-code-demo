@@ -7,11 +7,6 @@ spec:
   os: UNIX
   temporaryDirectoryPath: /tmp
   children:
-  - name: MySql
-    type: demo.MySql
-    deploymentGroup: 1
-    username: petportal
-    databaseName: petportal
   - name: Apache
     type: demo.ApacheHttpdServer
     deploymentGroup: 1
@@ -37,11 +32,6 @@ spec:
   - name: JBoss
     type: demo.JBoss
     deploymentGroup: 1
-  - name: MySql
-    type: demo.MySql
-    deploymentGroup: 1
-    username: petportal
-    databaseName: petportal
 - name: Infrastructure/Dev/Appserver-1
   type: overthere.SshHost
   tags:
@@ -104,21 +94,11 @@ spec:
     startWaitTime: 0
     stopCommand: echo stopping
     stopWaitTime: 0
-  - name: MySql
-    type: demo.MySql
-    deploymentGroup: 1
-    username: petportal
-    databaseName: petportal
 - name: Infrastructure/Dev/QAServer-2
   type: overthere.LocalHost
   os: UNIX
   temporaryDirectoryPath: /tmp
   children:
-  - name: MySql
-    type: demo.MySql
-    deploymentGroup: 1
-    username: petportal
-    databaseName: petportal
   - name: JBoss
     type: demo.JBoss
     deploymentGroup: 1
@@ -129,13 +109,6 @@ spec:
     startWaitTime: 0
     stopCommand: echo stopping
     stopWaitTime: 0
-- name: Infrastructure/Dev/TestRunner-1
-  type: overthere.LocalHost
-  os: UNIX
-  temporaryDirectoryPath: /tmp
-  children:
-  - name: TestRunner
-    type: smoketest.Runner
 - name: Infrastructure/Dev/WAS-host-1
   type: overthere.SshHost
   os: UNIX

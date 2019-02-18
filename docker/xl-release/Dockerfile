@@ -1,4 +1,4 @@
-FROM xebialabs/xl-release:8.5.1
+FROM xebialabs/xl-release:8.5.2
 
 # Add license file
 COPY default-conf/* /opt/xebialabs/xl-release-server/default-conf/
